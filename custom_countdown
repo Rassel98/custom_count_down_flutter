@@ -1,0 +1,71 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
+
+class CustomCountDown extends StatefulWidget {
+
+  final DateTime endTime;
+
+  const CustomCountdown({super.key, required this.endTime});
+
+  @override
+  _CustomCountdownState createState() => _CustomCountdownState();
+}
+
+class _CustomCountdownState extends State<CustomCountdown> {
+  late Timer _timer;
+  Duration _remainingTime = Duration();
+
+  @override
+  void initState() {
+    super.initState();
+    _startCountdown();
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Clean up the timer
+    super.dispose();
+  }
+
+  void _startCountdown() {
+    DateTime actualStartTime = DateTime.now();
+    if (widget.endTime.isAfter(actualStartTime)) {
+      setState(() {
+        _remainingTime = widget.endTime.difference(actualStartTime);
+      });
+
+      _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+        setState(() {
+          DateTime now = DateTime.now();
+          if (widget.endTime.isAfter(now)) {
+            _remainingTime = widget.endTime.difference(now);
+          } else {
+            _remainingTime = Duration.zero;
+            _timer.cancel();
+          }
+        });
+      });
+    } else {
+      _remainingTime = Duration.zero;
+    }
+  }
+
+  String _formatTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String days = duration.inDays > 0 ? '${duration.inDays}D :' : '';
+    String hours = twoDigits(duration.inHours.remainder(24));
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$days $hours : $minutes : $seconds";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _remainingTime.inSeconds > 0 ? _formatTime(_remainingTime) : "",
+      style: AppTheme.of(context).customTextTheme.labelMedium,
+    );
+  }
+}
